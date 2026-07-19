@@ -124,20 +124,20 @@ void addExpense(SystemManager* sys, int projectID, double amount, const char* de
     // Find an allocated donation and subtract remaining
     // For simplicity, we just find any donation allocated to this project
     // Real logic would be more complex, but we demonstrate finding and updating:
-    Donation* temp = sys->donationRecords->head;
-    while(temp != NULL) {
-        if (temp->currentStatus == STATUS_ALLOCATED || temp->currentStatus == STATUS_IN_PROGRESS) {
+    Donation* cur = sys->donationRecords->head;
+    while(cur != NULL) {
+        if (cur->currentStatus == STATUS_ALLOCATED || cur->currentStatus == STATUS_IN_PROGRESS) {
             // we assume it is related if it has remaining amount > 0
-            if (temp->remainingAmount >= amount) {
-                temp->remainingAmount -= amount;
-                pushStatus(temp, STATUS_IN_PROGRESS);
-                if (temp->remainingAmount == 0) {
-                    pushStatus(temp, STATUS_COMPLETED);
+            if (cur->remainingAmount >= amount) {
+                cur->remainingAmount -= amount;
+                pushStatus(cur, STATUS_IN_PROGRESS);
+                if (cur->remainingAmount == 0) {
+                    pushStatus(cur, STATUS_COMPLETED);
                 }
                 break;
             }
         }
-        temp = temp->next;
+        cur = cur->next;
     }
 }
 
@@ -207,11 +207,11 @@ void viewStatistics(SystemManager* sys) {
     
     int count = 0;
     double total = 0;
-    Donation* temp = sys->donationRecords->head;
-    while(temp != NULL) {
+    Donation* cur = sys->donationRecords->head;
+    while(cur != NULL) {
         count++;
-        total += temp->amount;
-        temp = temp->next;
+        total += cur->amount;
+        cur = cur->next;
     }
     cout << "Total Donations Received: " << count << "\n";
     if (count > 0)

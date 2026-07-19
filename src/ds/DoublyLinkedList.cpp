@@ -13,39 +13,39 @@ DoublyLinkedList* createDoublyLinkedList() {
 }
 
 void insertDonation(DoublyLinkedList* dll, Donation d) {
-    Donation* newNode = new Donation;
-    *newNode = d;
-    newNode->next = NULL;
-    newNode->prev = NULL;
+    Donation* temp = new Donation;
+    *temp = d;
+    temp->next = NULL;
+    temp->prev = NULL;
 
     if(dll->head == NULL) {
-        dll->head = newNode;
-        dll->tail = newNode;
+        dll->head = temp;
+        dll->tail = temp;
     } else {
-        dll->tail->next = newNode;
-        newNode->prev = dll->tail;
-        dll->tail = newNode;
+        dll->tail->next = temp;
+        temp->prev = dll->tail;
+        dll->tail = temp;
     }
 }
 
 Donation* searchDonation(DoublyLinkedList* dll, int donationID) {
-    Donation* temp = dll->head;
-    while(temp != NULL) {
-        if(temp->donationID == donationID) {
-            return temp;
+    Donation* cur = dll->head;
+    while(cur != NULL) {
+        if(cur->donationID == donationID) {
+            return cur;
         }
-        temp = temp->next;
+        cur = cur->next;
     }
     return NULL;
 }
 
 void printAllDonations(DoublyLinkedList* dll) {
-    Donation* temp = dll->head;
-    while(temp != NULL) {
-        cout << "Donation ID: " << temp->donationID 
-                  << " | Donor ID: " << temp->donorID 
-                  << " | Amount: " << temp->amount 
-                  << " | Status: " << temp->currentStatus << "\n";
-        temp = temp->next;
+    Donation* cur = dll->head;
+    while(cur != NULL) {
+        cout << "Donation ID: " << cur->donationID 
+                  << " | Donor ID: " << cur->donorID 
+                  << " | Amount: " << cur->amount 
+                  << " | Status: " << cur->currentStatus << "\n";
+        cur = cur->next;
     }
 }

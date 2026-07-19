@@ -3,7 +3,6 @@
 
 using namespace std;
 
-
 SinglyLinkedList* createSinglyLinkedList() {
     SinglyLinkedList* sll = new SinglyLinkedList;
     sll->head = NULL;
@@ -11,30 +10,30 @@ SinglyLinkedList* createSinglyLinkedList() {
 }
 
 void insertExpense(SinglyLinkedList* sll, Expense e) {
-    Expense* newNode = new Expense;
-    *newNode = e;
-    newNode->next = NULL;
+    Expense* temp = new Expense;
+    *temp = e;
+    temp->next = NULL;
 
     if (sll->head == NULL) {
-        sll->head = newNode;
+        sll->head = temp;
     } else {
-        Expense* temp = sll->head;
-        while (temp->next != NULL) {
-            temp = temp->next;
+        Expense* cur = sll->head;
+        while (cur->next != NULL) {
+            cur = cur->next;
         }
-        temp->next = newNode;
+        cur->next = temp;
     }
 }
 
 void printExpensesForProject(SinglyLinkedList* sll, int projectID) {
-    Expense* temp = sll->head;
-    while (temp != NULL) {
-        if (temp->projectID == projectID) {
-            cout << "  - Expense ID: " << temp->expenseID 
-                      << " | Amount: " << temp->amount 
-                      << " | Desc: " << temp->description 
-                      << " | Date: " << temp->date << "\n";
+    Expense* cur = sll->head;
+    while (cur != NULL) {
+        if (cur->projectID == projectID) {
+            cout << "  - Expense ID: " << cur->expenseID 
+                      << " | Amount: " << cur->amount 
+                      << " | Desc: " << cur->description 
+                      << " | Date: " << cur->date << "\n";
         }
-        temp = temp->next;
+        cur = cur->next;
     }
 }

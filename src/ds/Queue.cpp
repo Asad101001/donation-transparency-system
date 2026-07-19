@@ -1,6 +1,5 @@
 #include "Queue.h"
 
-
 Queue* createQueue() {
     Queue* q = new Queue;
     q->front = NULL;
@@ -29,15 +28,15 @@ Allocation dequeue(Queue* q) {
         return emptyAlloc;
     }
 
-    AllocationNode* temp = q->front;
-    Allocation data = temp->data;
+    AllocationNode* cur = q->front;
+    Allocation data = cur->data;
 
     q->front = q->front->next;
 
     if (q->front == NULL)
         q->rear = NULL;
 
-    delete temp;
+    delete cur;
     return data;
 }
 

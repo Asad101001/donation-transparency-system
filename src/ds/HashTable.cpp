@@ -20,32 +20,32 @@ int hashFunction(HashTable* ht, int donorID) {
 
 void insertDonor(HashTable* ht, Donor d) {
     int index = hashFunction(ht, d.donorID);
-    HashNode* newNode = new HashNode;
-    newNode->donor = d;
-    newNode->next = ht->table[index];
-    ht->table[index] = newNode;
+    HashNode* temp = new HashNode;
+    temp->donor = d;
+    temp->next = ht->table[index];
+    ht->table[index] = temp;
 }
 
 Donor* searchDonor(HashTable* ht, int donorID) {
     int index = hashFunction(ht, donorID);
-    HashNode* temp = ht->table[index];
-    while(temp != NULL) {
-        if(temp->donor.donorID == donorID) {
-            return &(temp->donor);
+    HashNode* cur = ht->table[index];
+    while(cur != NULL) {
+        if(cur->donor.donorID == donorID) {
+            return &(cur->donor);
         }
-        temp = temp->next;
+        cur = cur->next;
     }
     return NULL;
 }
 
 void printAllDonors(HashTable* ht) {
     for(int i = 0; i < ht->size; i++) {
-        HashNode* temp = ht->table[i];
-        while(temp != NULL) {
-            cout << "Donor ID: " << temp->donor.donorID 
-                      << " | Name: " << temp->donor.name 
-                      << " | CNIC: " << temp->donor.cnic << "\n";
-            temp = temp->next;
+        HashNode* cur = ht->table[i];
+        while(cur != NULL) {
+            cout << "Donor ID: " << cur->donor.donorID 
+                      << " | Name: " << cur->donor.name 
+                      << " | CNIC: " << cur->donor.cnic << "\n";
+            cur = cur->next;
         }
     }
 }
