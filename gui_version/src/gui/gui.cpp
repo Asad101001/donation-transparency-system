@@ -166,6 +166,7 @@ void initGUI() {
     
     // Automatically make window maximize to screen bounds while retaining title bar
     SetWindowState(FLAG_WINDOW_MAXIMIZED);
+    SetExitKey(KEY_NULL); // Prevent ESC from exiting the application
     
     customFont = LoadFontEx("C:\\Windows\\Fonts\\segoeui.ttf", 64, 0, 250);
     customFontBold = LoadFontEx("C:\\Windows\\Fonts\\segoeuib.ttf", 64, 0, 250);
@@ -235,7 +236,10 @@ void runGUI(SystemManager* sys) {
     
     while (!WindowShouldClose() && !wantsToExit) {
         
-        // Reset bounds of all text boxes to 0 so hidden ones don't steal clicks
+        // Update input using the bounds calculated and drawn from the PREVIOUS frame
+        UpdateTextBoxes(allTextBoxes, 7);
+        
+        // Reset bounds of all text boxes to 0 so hidden ones don't steal clicks THIS frame
         for (int i = 0; i < 7; i++) allTextBoxes[i]->bounds = {0,0,0,0};
         
         float wheel = GetMouseWheelMove();
@@ -258,8 +262,6 @@ void runGUI(SystemManager* sys) {
             tProjDesc.bounds = { contentX, 180, 400, 50 };
             // tExpAmt/Desc bounds set during draw
         }
-
-        UpdateTextBoxes(allTextBoxes, 7);
 
         BeginDrawing();
         ClearBackground(bgDark);
