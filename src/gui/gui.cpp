@@ -5,7 +5,7 @@
 // Define to bypass standard string functions
 int my_sprintf_int(char* buf, const char* prefix, int val) {
     char temp[20];
-    int i = 0, j = 0;
+    int i = 0;
     if (val == 0) { temp[i++] = '0'; }
     while (val > 0) { temp[i++] = (val % 10) + '0'; val /= 10; }
     
