@@ -1,6 +1,8 @@
 #include "gui.h"
 #include "raylib.h"
 #include "../core/Utils.h"
+#include <ctime>
+#include <cstdio>
 
 // String utilities
 int my_sprintf_int(char* buf, const char* prefix, int val) {
@@ -42,6 +44,7 @@ struct TextBox {
     char text[100];
     int letterCount;
     const char* placeholder;
+    bool isNumeric;
 };
 
 TextBox* activeTextBox = NULL;
@@ -67,7 +70,8 @@ void UpdateTextBoxes(TextBox** textboxes, int count) {
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
         bool clickedInside = false;
         for(int i = 0; i < count; i++) {
-            if (CheckCollisionPointRec(GetMousePosition(), textboxes[i]->bounds)) {
+            // Only check collision if bounds are actually valid (width > 0)
+            if (textboxes[i]->bounds.width > 0 && CheckCollisionPointRec(GetMousePosition(), textboxes[i]->bounds)) {
                 activeTextBox = textboxes[i];
                 clickedInside = true;
                 break;
@@ -79,7 +83,14 @@ void UpdateTextBoxes(TextBox** textboxes, int count) {
     if (activeTextBox != NULL) {
         int key = GetCharPressed();
         while (key > 0) {
-            if ((key >= 32) && (key <= 125) && (activeTextBox->letterCount < 99)) {
+            bool valid = false;
+            if (activeTextBox->isNumeric) {
+                if (key >= '0' && key <= '9') valid = true;
+            } else {
+                if (key >= 32 && key <= 125) valid = true;
+            }
+            
+            if (valid && (activeTextBox->letterCount < 99)) {
                 activeTextBox->text[activeTextBox->letterCount] = (char)key;
                 activeTextBox->text[activeTextBox->letterCount + 1] = '\0';
                 activeTextBox->letterCount++;
@@ -125,18 +136,16 @@ void ShowPopup(const char* msg, Color col = accentCyanDark) {
 }
 
 // Forms Data
-TextBox tDonorName = { { 0, 0, 400, 50 }, "", 0, "Name" };
-TextBox tDonorCnic = { { 0, 0, 400, 50 }, "", 0, "National ID (CNIC)" };
-TextBox tDonAmt = { { 0, 0, 400, 50 }, "", 0, "Amount (Rs)" };
-TextBox tDonDate = { { 0, 0, 400, 50 }, "", 0, "Date (DD/MM/YYYY)" };
+TextBox tDonorName = { { 0, 0, 0, 0 }, "", 0, "Name", false };
+TextBox tDonorCnic = { { 0, 0, 0, 0 }, "", 0, "National ID (CNIC - Numbers Only)", true };
+TextBox tDonAmt = { { 0, 0, 0, 0 }, "", 0, "Amount (Rs)", true };
 
-TextBox tProjName = { { 0, 0, 400, 50 }, "", 0, "Cause Name" };
-TextBox tProjDesc = { { 0, 0, 400, 50 }, "", 0, "Short Description" };
-TextBox tExpAmt = { { 0, 0, 400, 50 }, "", 0, "Expense Amount" };
-TextBox tExpDesc = { { 0, 0, 400, 50 }, "", 0, "What was purchased?" };
-TextBox tExpDate = { { 0, 0, 400, 50 }, "", 0, "Date" };
+TextBox tProjName = { { 0, 0, 0, 0 }, "", 0, "Cause Name", false };
+TextBox tProjDesc = { { 0, 0, 0, 0 }, "", 0, "Short Description", false };
+TextBox tExpAmt = { { 0, 0, 0, 0 }, "", 0, "Expense Amount", true };
+TextBox tExpDesc = { { 0, 0, 0, 0 }, "", 0, "What was purchased?", false };
 
-TextBox* allTextBoxes[] = { &tDonorName, &tDonorCnic, &tDonAmt, &tDonDate, &tProjName, &tProjDesc, &tExpAmt, &tExpDesc, &tExpDate };
+TextBox* allTextBoxes[] = { &tDonorName, &tDonorCnic, &tDonAmt, &tProjName, &tProjDesc, &tExpAmt, &tExpDesc };
 
 int selectedDonorID = -1;
 int selectedProjectID = -1;
@@ -154,7 +163,9 @@ void initGUI() {
     SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_RESIZABLE);
     InitWindow(1280, 720, "Donation Transparency System");
     SetWindowMinSize(1024, 768);
-    // Explicitly allow closing using the cross button and ESC by not disabling SetExitKey
+    
+    // Automatically make window maximize to screen bounds while retaining title bar
+    SetWindowState(FLAG_WINDOW_MAXIMIZED);
     
     customFont = LoadFontEx("C:\\Windows\\Fonts\\segoeui.ttf", 64, 0, 250);
     customFontBold = LoadFontEx("C:\\Windows\\Fonts\\segoeuib.ttf", 64, 0, 250);
@@ -171,29 +182,26 @@ void DrawSidebar() {
     DrawTextEx(customFontBold, "Transparency", (Vector2){30, 40}, 36, 1, accentCyan);
     DrawLine(30, 100, 250, 100, panelLight);
     
-    const char* menus[] = { "Home", "Contributors", "Causes", "Track Funds", "EXIT APP" };
-    AppScreen screens[] = { HOME, CONTRIBUTORS, CAUSES, TRACK, TRACK };
+    const char* menus[] = { "Home", "Contributors", "Causes", "Track Funds" };
+    AppScreen screens[] = { HOME, CONTRIBUTORS, CAUSES, TRACK };
     
-    for(int i = 0; i < 5; i++) {
+    for(int i = 0; i < 4; i++) {
         Rectangle btn = { 0, (float)130 + i * 70, 280, 60 };
         bool hovered = CheckCollisionPointRec(GetMousePosition(), btn);
-        bool active = (currentScreen == screens[i] && i != 4);
+        bool active = (currentScreen == screens[i]);
         
         if (hovered || active) {
-            DrawRectangleRec(btn, active ? accentCyanDark : (i == 4 ? errorRed : panelLight));
+            DrawRectangleRec(btn, active ? accentCyanDark : panelLight);
             DrawRectangle(0, btn.y, 6, btn.height, active ? textWhite : bgDark); 
         }
         DrawTextEx(customFont, menus[i], (Vector2){40, btn.y + 18}, 26, 1, active ? bgDark : textWhite);
         
         if (hovered && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-            if (i == 4) wantsToExit = true; 
-            else { 
-                currentScreen = screens[i]; 
-                activeTextBox = NULL; 
-                selectedDonorID = -1;
-                selectedProjectID = -1;
-                scrollOffset = 0.0f; // reset scroll on tab change
-            }
+            currentScreen = screens[i]; 
+            activeTextBox = NULL; 
+            selectedDonorID = -1;
+            selectedProjectID = -1;
+            scrollOffset = 0.0f;
         }
     }
 }
@@ -220,29 +228,47 @@ void flattenProjects(Project* root) {
 }
 
 void runGUI(SystemManager* sys) {
+    char currentDate[20];
+    time_t t = time(NULL);
+    struct tm tm = *localtime(&t);
+    sprintf(currentDate, "%02d/%02d/%d", tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900);
+    
     while (!WindowShouldClose() && !wantsToExit) {
-        UpdateTextBoxes(allTextBoxes, 9);
         
-        // Handle scrolling
+        // Reset bounds of all text boxes to 0 so hidden ones don't steal clicks
+        for (int i = 0; i < 7; i++) allTextBoxes[i]->bounds = {0,0,0,0};
+        
         float wheel = GetMouseWheelMove();
         if (wheel != 0.0f) {
             scrollOffset -= wheel * 40.0f;
             if (scrollOffset < 0) scrollOffset = 0;
         }
-
-        BeginDrawing();
-        ClearBackground(bgDark);
-        DrawSidebar();
         
         int sw = GetScreenWidth();
         int sh = GetScreenHeight();
         float contentX = 330; 
         
+        // Setup bounds based on current screen ONLY
+        if (currentScreen == CONTRIBUTORS) {
+            tDonorName.bounds = { contentX, 110, 400, 50 };
+            tDonorCnic.bounds = { contentX, 180, 400, 50 };
+            // tDonAmt bounds will be set during draw if a card is expanded
+        } else if (currentScreen == CAUSES) {
+            tProjName.bounds = { contentX, 110, 400, 50 };
+            tProjDesc.bounds = { contentX, 180, 400, 50 };
+            // tExpAmt/Desc bounds set during draw
+        }
+
+        UpdateTextBoxes(allTextBoxes, 7);
+
+        BeginDrawing();
+        ClearBackground(bgDark);
+        DrawSidebar();
+        
         if (currentScreen == HOME) {
             DrawTextEx(customFontBold, "Welcome to the DT System", (Vector2){contentX, 50}, 50, 1, textWhite);
             DrawTextEx(customFont, "Manage and track funds with complete transparency.", (Vector2){contentX, 110}, 24, 1, textMuted);
             
-            // Workflow Guide
             Rectangle guide = { contentX, 160, 800, 260 };
             DrawRectangleRec(guide, panelDark);
             DrawRectangleLinesEx(guide, 2, accentCyan);
@@ -261,7 +287,6 @@ void runGUI(SystemManager* sys) {
                 DrawTextEx(customFont, steps[i], (Vector2){guide.x + 20, guide.y + 70 + (i * 35)}, 20, 1, textWhite);
             }
             
-            // Stats
             int count = 0; double total = 0;
             Donation* temp = sys->donationRecords->head;
             while(temp != NULL) { count++; total += temp->amount; temp = temp->next; }
@@ -284,8 +309,6 @@ void runGUI(SystemManager* sys) {
             
         } else if (currentScreen == CONTRIBUTORS) {
             DrawTextEx(customFontBold, "Add New Contributor", (Vector2){contentX, 50}, 36, 1, textWhite);
-            tDonorName.bounds = { contentX, 110, 400, 50 };
-            tDonorCnic.bounds = { contentX, 180, 400, 50 };
             DrawTextBox(tDonorName); DrawTextBox(tDonorCnic);
             
             if (DrawButton((Rectangle){contentX, 250, 200, 50}, "Add Person", successGreen)) {
@@ -293,6 +316,8 @@ void runGUI(SystemManager* sys) {
                     registerDonor(sys, tDonorName.text, tDonorCnic.text);
                     ShowPopup("Contributor Added!", successGreen);
                     ResetTextBox(tDonorName); ResetTextBox(tDonorCnic);
+                } else {
+                    ShowPopup("Please enter a name first.", errorRed);
                 }
             }
             
@@ -306,7 +331,7 @@ void runGUI(SystemManager* sys) {
             for(int i = 0; i < sys->donorDB->size; i++) {
                 HashNode* cur = sys->donorDB->table[i];
                 while(cur != NULL) {
-                    Rectangle card = { contentX + 500, yOff, 500, selectedDonorID == cur->donor.donorID ? 240.0f : 60.0f };
+                    Rectangle card = { contentX + 500, yOff, 500, selectedDonorID == cur->donor.donorID ? 200.0f : 60.0f };
                     
                     if (yOff + card.height > 140 && yOff < sh) {
                         bool hover = CheckCollisionPointRec(GetMousePosition(), {card.x, card.y, card.width, 60});
@@ -321,16 +346,25 @@ void runGUI(SystemManager* sys) {
                         
                         if (selectedDonorID == cur->donor.donorID) {
                             tDonAmt.bounds = { card.x + 20, card.y + 70, 460, 45 };
-                            tDonDate.bounds = { card.x + 20, card.y + 125, 460, 45 };
-                            DrawTextBox(tDonAmt); DrawTextBox(tDonDate);
-                            if (DrawButton((Rectangle){card.x + 20, card.y + 180, 200, 45}, "Confirm Funds", successGreen)) {
+                            DrawTextBox(tDonAmt);
+                            
+                            char autoDateMsg[100];
+                            sprintf(autoDateMsg, "Date: %s (Auto-filled)", currentDate);
+                            DrawTextEx(customFont, autoDateMsg, (Vector2){card.x + 20, card.y + 130}, 18, 1, textMuted);
+                            
+                            if (DrawButton((Rectangle){card.x + 320, card.y + 130, 160, 45}, "Confirm", successGreen)) {
                                 if (tDonAmt.letterCount > 0) {
-                                    makeDonation(sys, selectedDonorID, my_atof(tDonAmt.text), tDonDate.text);
+                                    makeDonation(sys, selectedDonorID, my_atof(tDonAmt.text), currentDate);
                                     ShowPopup("Funds Received!", successGreen);
-                                    ResetTextBox(tDonAmt); ResetTextBox(tDonDate);
+                                    ResetTextBox(tDonAmt);
                                     selectedDonorID = -1;
+                                } else {
+                                    ShowPopup("Please enter an amount.", errorRed);
                                 }
                             }
+                        } else {
+                            // Ensure invisible cards don't have bounding boxes active for this specific field
+                            if (&tDonAmt == activeTextBox) activeTextBox = NULL;
                         }
                     }
                     
@@ -342,8 +376,6 @@ void runGUI(SystemManager* sys) {
             
         } else if (currentScreen == CAUSES) {
             DrawTextEx(customFontBold, "Start a New Cause", (Vector2){contentX, 50}, 36, 1, textWhite);
-            tProjName.bounds = { contentX, 110, 400, 50 };
-            tProjDesc.bounds = { contentX, 180, 400, 50 };
             DrawTextBox(tProjName); DrawTextBox(tProjDesc);
             
             if (DrawButton((Rectangle){contentX, 250, 200, 50}, "Create Cause", successGreen)) {
@@ -351,6 +383,8 @@ void runGUI(SystemManager* sys) {
                     createProject(sys, tProjName.text, tProjDesc.text);
                     ShowPopup("Cause Started!", successGreen);
                     ResetTextBox(tProjName); ResetTextBox(tProjDesc);
+                } else {
+                    ShowPopup("Please enter a name.", errorRed);
                 }
             }
             
@@ -371,7 +405,7 @@ void runGUI(SystemManager* sys) {
             BeginScissorMode(contentX + 500, 150, sw - (contentX + 500), sh - 150);
             float yOff = 150 - scrollOffset;
             for(int i = 0; i < projCount; i++) {
-                Rectangle card = { contentX + 500, yOff, 500, selectedProjectID == projArray[i].projectID ? 260.0f : 80.0f };
+                Rectangle card = { contentX + 500, yOff, 500, selectedProjectID == projArray[i].projectID ? 220.0f : 80.0f };
                 
                 if (yOff + card.height > 150 && yOff < sh) {
                     bool hover = CheckCollisionPointRec(GetMousePosition(), {card.x, card.y, card.width, 80});
@@ -395,15 +429,16 @@ void runGUI(SystemManager* sys) {
                     if (selectedProjectID == projArray[i].projectID) {
                         tExpAmt.bounds = { card.x + 20, card.y + 90, 460, 40 };
                         tExpDesc.bounds = { card.x + 20, card.y + 140, 460, 40 };
-                        tExpDate.bounds = { card.x + 20, card.y + 190, 460, 40 };
-                        DrawTextBox(tExpAmt); DrawTextBox(tExpDesc); DrawTextBox(tExpDate);
+                        DrawTextBox(tExpAmt); DrawTextBox(tExpDesc);
                         
-                        if (DrawButton((Rectangle){card.x + 20, card.y + 240, 200, 40}, "Log Expense", errorRed)) {
+                        if (DrawButton((Rectangle){card.x + 20, card.y + 190, 200, 30}, "Log Expense", errorRed)) {
                             if (tExpAmt.letterCount > 0) {
-                                addExpense(sys, selectedProjectID, my_atof(tExpAmt.text), tExpDesc.text, tExpDate.text);
+                                addExpense(sys, selectedProjectID, my_atof(tExpAmt.text), tExpDesc.text, currentDate);
                                 ShowPopup("Expense Logged!", successGreen);
-                                ResetTextBox(tExpAmt); ResetTextBox(tExpDesc); ResetTextBox(tExpDate);
+                                ResetTextBox(tExpAmt); ResetTextBox(tExpDesc);
                                 selectedProjectID = -1;
+                            } else {
+                                ShowPopup("Enter an expense amount.", errorRed);
                             }
                         }
                     }
