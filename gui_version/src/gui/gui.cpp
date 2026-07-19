@@ -11,7 +11,6 @@ int my_sprintf_int(char* buf, const char* prefix, int val) {
     
     int k = 0;
     while(prefix[k] != '\0') { buf[k] = prefix[k]; k++; }
-    
     while (i > 0) { buf[k++] = temp[--i]; }
     buf[k] = '\0';
     return k;
@@ -33,7 +32,7 @@ Color errorRed = { 255, 80, 80, 255 };
 Font customFont;
 Font customFontBold;
 
-enum AppScreen { DASHBOARD, DONORS, PROJECTS, DONATIONS, REPORT };
+enum AppScreen { DASHBOARD, DONORS, PROJECTS, DONATIONS, ALLOCATIONS, EXPENSES, REPORT };
 AppScreen currentScreen = DASHBOARD;
 
 struct TextBox {
@@ -47,7 +46,6 @@ TextBox* activeTextBox = NULL;
 
 void DrawTextBox(TextBox& tb) {
     bool isActive = (activeTextBox == &tb);
-    
     DrawRectangleRec(tb.bounds, isActive ? panelDark : bgDark);
     DrawRectangleLinesEx(tb.bounds, isActive ? 3 : 2, isActive ? accentCyan : textMuted);
     
@@ -85,7 +83,8 @@ void UpdateTextBoxes(TextBox** textboxes, int count) {
             key = GetCharPressed();
         }
         
-        if (IsKeyPressed(KEY_BACKSPACE)) {
+        // Use IsKeyPressedRepeat for smooth backspacing
+        if (IsKeyPressed(KEY_BACKSPACE) || IsKeyPressedRepeat(KEY_BACKSPACE)) {
             activeTextBox->letterCount--;
             if (activeTextBox->letterCount < 0) activeTextBox->letterCount = 0;
             activeTextBox->text[activeTextBox->letterCount] = '\0';
@@ -123,9 +122,14 @@ TextBox tProjDesc = { { 0, 0, 500, 50 }, "", 0, "Project Description" };
 TextBox tDonID = { { 0, 0, 500, 50 }, "", 0, "Donor ID" };
 TextBox tDonAmt = { { 0, 0, 500, 50 }, "", 0, "Amount (Rs)" };
 TextBox tDonDate = { { 0, 0, 500, 50 }, "", 0, "Date (DD/MM/YYYY)" };
+TextBox tAllocProjID = { { 0, 0, 500, 50 }, "", 0, "Project ID to Allocate" };
+TextBox tExpProjID = { { 0, 0, 500, 50 }, "", 0, "Project ID" };
+TextBox tExpAmt = { { 0, 0, 500, 50 }, "", 0, "Expense Amount" };
+TextBox tExpDesc = { { 0, 0, 500, 50 }, "", 0, "Expense Desc" };
+TextBox tExpDate = { { 0, 0, 500, 50 }, "", 0, "Date" };
 TextBox tRepID = { { 0, 0, 500, 50 }, "", 0, "Donation ID" };
 
-TextBox* allTextBoxes[] = { &tDonorName, &tDonorCnic, &tProjName, &tProjDesc, &tDonID, &tDonAmt, &tDonDate, &tRepID };
+TextBox* allTextBoxes[] = { &tDonorName, &tDonorCnic, &tProjName, &tProjDesc, &tDonID, &tDonAmt, &tDonDate, &tAllocProjID, &tExpProjID, &tExpAmt, &tExpDesc, &tExpDate, &tRepID };
 
 void ResetTextBox(TextBox& tb) { tb.text[0] = '\0'; tb.letterCount = 0; }
 int my_atoi(const char* str) {
@@ -136,13 +140,13 @@ int my_atoi(const char* str) {
 double my_atof(const char* str) { return (double)my_atoi(str); }
 
 void initGUI() {
-    SetConfigFlags(FLAG_VSYNC_HINT); // | FLAG_WINDOW_RESIZABLE
+    SetConfigFlags(FLAG_VSYNC_HINT);
     InitWindow(1280, 720, "Donation Transparency System");
     
     int monitor = GetCurrentMonitor();
     SetWindowSize(GetMonitorWidth(monitor), GetMonitorHeight(monitor));
     ToggleFullscreen();
-    SetExitKey(KEY_NULL); // ESC won't exit
+    SetExitKey(KEY_NULL); // Prevent ESC from exiting the app directly
     
     customFont = LoadFontEx("C:\\Windows\\Fonts\\segoeui.ttf", 64, 0, 250);
     customFontBold = LoadFontEx("C:\\Windows\\Fonts\\segoeuib.ttf", 64, 0, 250);
@@ -151,31 +155,32 @@ void initGUI() {
     if (customFontBold.baseSize == 0) customFontBold = GetFontDefault();
 }
 
+bool wantsToExit = false;
+
 void DrawSidebar() {
     int sh = GetScreenHeight();
     
     DrawRectangle(0, 0, 300, sh, panelDark);
     DrawTextEx(customFontBold, "DT System", (Vector2){40, 50}, 48, 1, accentCyan);
     
-    const char* menus[] = { "Dashboard", "Donors", "Projects", "Donations", "Report" };
-    AppScreen screens[] = { DASHBOARD, DONORS, PROJECTS, DONATIONS, REPORT };
+    const char* menus[] = { "Dashboard", "Donors", "Projects", "Donations", "Allocations", "Expenses", "Report", "EXIT APP" };
+    AppScreen screens[] = { DASHBOARD, DONORS, PROJECTS, DONATIONS, ALLOCATIONS, EXPENSES, REPORT, REPORT };
     
-    for(int i = 0; i < 5; i++) {
-        Rectangle btn = { 0, (float)180 + i * 80, 300, 70 };
+    for(int i = 0; i < 8; i++) {
+        Rectangle btn = { 0, (float)150 + i * 70, 300, 60 };
         bool hovered = CheckCollisionPointRec(GetMousePosition(), btn);
-        bool active = (currentScreen == screens[i]);
+        bool active = (currentScreen == screens[i] && i != 7);
         
-        if (hovered || active) DrawRectangleRec(btn, active ? accentCyanDark : bgDark);
-        DrawTextEx(customFont, menus[i], (Vector2){40, btn.y + 20}, 28, 1, active ? bgDark : textWhite);
+        if (hovered || active) DrawRectangleRec(btn, active ? accentCyanDark : (i == 7 ? errorRed : bgDark));
+        DrawTextEx(customFont, menus[i], (Vector2){40, btn.y + 15}, 28, 1, active ? bgDark : textWhite);
         
         if (hovered && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-            currentScreen = screens[i];
-            activeTextBox = NULL; // Reset focus on tab change
+            if (i == 7) { wantsToExit = true; } 
+            else { currentScreen = screens[i]; activeTextBox = NULL; }
         }
     }
 }
 
-// Function to seed dummy data internally from GUI
 void seedDummyData(SystemManager* sys) {
     registerDonor(sys, "Alice", "12345");
     registerDonor(sys, "Bob", "67890");
@@ -185,63 +190,88 @@ void seedDummyData(SystemManager* sys) {
     makeDonation(sys, 2, 5000, "21/07/2026");
     allocateDonation(sys, 10);
     addExpense(sys, 10, 5000, "Pipes", "22/07/2026");
-    addExpense(sys, 10, 3000, "Labor", "23/07/2026");
     ShowPopup("Dummy Data Seeded!");
 }
 
 void DrawDashboard(SystemManager* sys) {
-    int sh = GetScreenHeight();
     int startX = 350;
     
-    DrawTextEx(customFontBold, "Dashboard", (Vector2){(float)startX, 50}, 60, 1, textWhite);
+    DrawTextEx(customFontBold, "Dashboard & Statistics", (Vector2){(float)startX, 50}, 50, 1, textWhite);
     
     char buf[100];
-    my_sprintf_int(buf, "Max Donation: Rs ", (int)getMax(sys->maxDonations));
-    DrawTextEx(customFont, buf, (Vector2){(float)startX, 200}, 36, 1, textWhite);
+    my_sprintf_int(buf, "Largest Donation: Rs ", (int)getMax(sys->maxDonations));
+    DrawTextEx(customFont, buf, (Vector2){(float)startX, 150}, 32, 1, textWhite);
     
-    my_sprintf_int(buf, "Min Donation: Rs ", (int)getMin(sys->minDonations));
-    DrawTextEx(customFont, buf, (Vector2){(float)startX, 260}, 36, 1, textWhite);
+    my_sprintf_int(buf, "Smallest Donation: Rs ", (int)getMin(sys->minDonations));
+    DrawTextEx(customFont, buf, (Vector2){(float)startX, 200}, 32, 1, textWhite);
     
-    if (DrawButton((Rectangle){(float)startX, (float)sh - 150, 300, 60}, "Seed Dummy Mode Data")) {
+    int count = 0;
+    double total = 0;
+    Donation* temp = sys->donationRecords->head;
+    while(temp != NULL) {
+        count++;
+        total += temp->amount;
+        temp = temp->next;
+    }
+    my_sprintf_int(buf, "Total Donations: ", count);
+    DrawTextEx(customFont, buf, (Vector2){(float)startX, 250}, 32, 1, accentCyan);
+    my_sprintf_int(buf, "Average Donation: Rs ", count > 0 ? (int)(total / count) : 0);
+    DrawTextEx(customFont, buf, (Vector2){(float)startX, 300}, 32, 1, textWhite);
+    
+    if (DrawButton((Rectangle){(float)startX, 400, 400, 60}, "Seed Dummy Mode Data")) {
         seedDummyData(sys);
     }
 }
 
 void runGUI(SystemManager* sys) {
-    while (!WindowShouldClose()) {
-        UpdateTextBoxes(allTextBoxes, 8);
+    while (!WindowShouldClose() && !wantsToExit) {
+        UpdateTextBoxes(allTextBoxes, 13);
 
         BeginDrawing();
         ClearBackground(bgDark);
         DrawSidebar();
         
         int sw = GetScreenWidth();
-        float contentX = 300 + (sw - 300) / 2.0f; // Center of content area
+        int sh = GetScreenHeight();
+        float contentX = 350; 
         
         if (currentScreen == DASHBOARD) {
             DrawDashboard(sys);
         } else if (currentScreen == DONORS) {
-            DrawTextEx(customFontBold, "Register Donor", (Vector2){contentX - 250, 150}, 50, 1, textWhite);
-            tDonorName.bounds = { contentX - 250, 250, 500, 60 };
-            tDonorCnic.bounds = { contentX - 250, 330, 500, 60 };
-            DrawTextBox(tDonorName);
-            DrawTextBox(tDonorCnic);
+            DrawTextEx(customFontBold, "Register Donor", (Vector2){contentX, 50}, 40, 1, accentCyan);
+            tDonorName.bounds = { contentX, 120, 400, 50 };
+            tDonorCnic.bounds = { contentX, 190, 400, 50 };
+            DrawTextBox(tDonorName); DrawTextBox(tDonorCnic);
             
-            if (DrawButton((Rectangle){contentX - 150, 430, 300, 60}, "Register")) {
+            if (DrawButton((Rectangle){contentX, 260, 200, 50}, "Register")) {
                 if (tDonorName.letterCount > 0) {
                     registerDonor(sys, tDonorName.text, tDonorCnic.text);
                     ShowPopup("Donor Registered Successfully!");
                     ResetTextBox(tDonorName); ResetTextBox(tDonorCnic);
                 }
             }
-        } else if (currentScreen == PROJECTS) {
-            DrawTextEx(customFontBold, "Create Project", (Vector2){contentX - 250, 150}, 50, 1, textWhite);
-            tProjName.bounds = { contentX - 250, 250, 500, 60 };
-            tProjDesc.bounds = { contentX - 250, 330, 500, 60 };
-            DrawTextBox(tProjName);
-            DrawTextBox(tProjDesc);
             
-            if (DrawButton((Rectangle){contentX - 150, 430, 300, 60}, "Create")) {
+            DrawTextEx(customFontBold, "Registered Donors", (Vector2){contentX + 500, 50}, 40, 1, accentCyan);
+            DrawRectangle(contentX + 500, 120, 600, sh - 200, panelDark);
+            int yOff = 140;
+            for(int i = 0; i < sys->donorDB->size; i++) {
+                HashNode* cur = sys->donorDB->table[i];
+                while(cur != NULL) {
+                    char buf[200];
+                    my_sprintf_int(buf, "ID: ", cur->donor.donorID);
+                    DrawTextEx(customFontBold, buf, (Vector2){contentX + 520, (float)yOff}, 24, 1, textWhite);
+                    DrawTextEx(customFont, cur->donor.name, (Vector2){contentX + 620, (float)yOff}, 24, 1, textMuted);
+                    yOff += 40;
+                    cur = cur->next;
+                }
+            }
+        } else if (currentScreen == PROJECTS) {
+            DrawTextEx(customFontBold, "Create Project", (Vector2){contentX, 50}, 40, 1, accentCyan);
+            tProjName.bounds = { contentX, 120, 400, 50 };
+            tProjDesc.bounds = { contentX, 190, 400, 50 };
+            DrawTextBox(tProjName); DrawTextBox(tProjDesc);
+            
+            if (DrawButton((Rectangle){contentX, 260, 200, 50}, "Create")) {
                 if (tProjName.letterCount > 0) {
                     createProject(sys, tProjName.text, tProjDesc.text);
                     ShowPopup("Project Created Successfully!");
@@ -249,48 +279,89 @@ void runGUI(SystemManager* sys) {
                 }
             }
         } else if (currentScreen == DONATIONS) {
-            DrawTextEx(customFontBold, "Make Donation", (Vector2){contentX - 250, 100}, 50, 1, textWhite);
-            tDonID.bounds = { contentX - 250, 200, 500, 60 };
-            tDonAmt.bounds = { contentX - 250, 280, 500, 60 };
-            tDonDate.bounds = { contentX - 250, 360, 500, 60 };
+            DrawTextEx(customFontBold, "Make Donation", (Vector2){contentX, 50}, 40, 1, accentCyan);
+            tDonID.bounds = { contentX, 120, 400, 50 };
+            tDonAmt.bounds = { contentX, 190, 400, 50 };
+            tDonDate.bounds = { contentX, 260, 400, 50 };
             DrawTextBox(tDonID); DrawTextBox(tDonAmt); DrawTextBox(tDonDate);
             
-            if (DrawButton((Rectangle){contentX - 150, 460, 300, 60}, "Donate")) {
+            if (DrawButton((Rectangle){contentX, 330, 200, 50}, "Donate")) {
                 if (tDonAmt.letterCount > 0) {
                     makeDonation(sys, my_atoi(tDonID.text), my_atof(tDonAmt.text), tDonDate.text);
                     ShowPopup("Donation Processed!");
                     ResetTextBox(tDonID); ResetTextBox(tDonAmt); ResetTextBox(tDonDate);
                 }
             }
+            
+            DrawTextEx(customFontBold, "Donation History", (Vector2){contentX + 500, 50}, 40, 1, accentCyan);
+            DrawRectangle(contentX + 500, 120, 600, sh - 200, panelDark);
+            int yOff = 140;
+            Donation* cur = sys->donationRecords->head;
+            while(cur != NULL) {
+                char buf[200];
+                my_sprintf_int(buf, "Donation ID: ", cur->donationID);
+                DrawTextEx(customFontBold, buf, (Vector2){contentX + 520, (float)yOff}, 24, 1, textWhite);
+                my_sprintf_int(buf, "Rs ", (int)cur->amount);
+                DrawTextEx(customFont, buf, (Vector2){contentX + 750, (float)yOff}, 24, 1, accentCyan);
+                yOff += 40;
+                cur = cur->next;
+            }
+        } else if (currentScreen == ALLOCATIONS) {
+            DrawTextEx(customFontBold, "Allocate Donation", (Vector2){contentX, 50}, 40, 1, accentCyan);
+            tAllocProjID.bounds = { contentX, 120, 400, 50 };
+            DrawTextBox(tAllocProjID);
+            
+            if (DrawButton((Rectangle){contentX, 190, 200, 50}, "Allocate")) {
+                if (tAllocProjID.letterCount > 0) {
+                    allocateDonation(sys, my_atoi(tAllocProjID.text));
+                    ShowPopup("Allocation Attempted!");
+                    ResetTextBox(tAllocProjID);
+                }
+            }
+        } else if (currentScreen == EXPENSES) {
+            DrawTextEx(customFontBold, "Add Expense", (Vector2){contentX, 50}, 40, 1, accentCyan);
+            tExpProjID.bounds = { contentX, 120, 400, 50 };
+            tExpAmt.bounds = { contentX, 190, 400, 50 };
+            tExpDesc.bounds = { contentX, 260, 400, 50 };
+            tExpDate.bounds = { contentX, 330, 400, 50 };
+            DrawTextBox(tExpProjID); DrawTextBox(tExpAmt); DrawTextBox(tExpDesc); DrawTextBox(tExpDate);
+            
+            if (DrawButton((Rectangle){contentX, 400, 200, 50}, "Add Expense")) {
+                if (tExpProjID.letterCount > 0) {
+                    addExpense(sys, my_atoi(tExpProjID.text), my_atof(tExpAmt.text), tExpDesc.text, tExpDate.text);
+                    ShowPopup("Expense Added!");
+                    ResetTextBox(tExpProjID); ResetTextBox(tExpAmt); ResetTextBox(tExpDesc); ResetTextBox(tExpDate);
+                }
+            }
         } else if (currentScreen == REPORT) {
-            DrawTextEx(customFontBold, "Transparency Report", (Vector2){contentX - 300, 100}, 50, 1, textWhite);
-            tRepID.bounds = { contentX - 300, 180, 400, 60 };
+            DrawTextEx(customFontBold, "Transparency Report", (Vector2){contentX, 50}, 40, 1, accentCyan);
+            tRepID.bounds = { contentX, 120, 400, 50 };
             DrawTextBox(tRepID);
             
             if (tRepID.letterCount > 0) {
                 int donID = my_atoi(tRepID.text);
                 Donation* d = searchDonation(sys->donationRecords, donID);
                 if (d != NULL) {
-                    Rectangle panel = { contentX - 300, 280, 600, 350 };
+                    Rectangle panel = { contentX, 220, 800, 400 };
                     DrawRectangleRec(panel, panelDark);
                     
                     char buf[100];
                     my_sprintf_int(buf, "Initial Donation: Rs ", (int)d->amount);
-                    DrawTextEx(customFontBold, buf, (Vector2){panel.x + 30, panel.y + 40}, 32, 1, accentCyan);
+                    DrawTextEx(customFontBold, buf, (Vector2){panel.x + 40, panel.y + 40}, 36, 1, accentCyan);
                     
-                    DrawLine(panel.x + 30, panel.y + 110, panel.x + 570, panel.y + 110, textMuted);
+                    DrawLine(panel.x + 40, panel.y + 120, panel.x + 760, panel.y + 120, textMuted);
                     
                     my_sprintf_int(buf, "Remaining: Rs ", (int)d->remainingAmount);
-                    DrawTextEx(customFontBold, buf, (Vector2){panel.x + 30, panel.y + 150}, 32, 1, textWhite);
+                    DrawTextEx(customFontBold, buf, (Vector2){panel.x + 40, panel.y + 160}, 36, 1, textWhite);
                     
                     const char* stat = "Status: Pending";
                     if(d->currentStatus == STATUS_ALLOCATED) stat = "Status: Allocated";
                     else if(d->currentStatus == STATUS_IN_PROGRESS) stat = "Status: In Progress";
                     else if(d->currentStatus == STATUS_COMPLETED) stat = "Status: Completed";
-                    DrawTextEx(customFont, stat, (Vector2){panel.x + 30, panel.y + 200}, 28, 1, textMuted);
+                    DrawTextEx(customFont, stat, (Vector2){panel.x + 40, panel.y + 220}, 32, 1, textMuted);
                     
                 } else {
-                    DrawTextEx(customFont, "Donation Not Found.", (Vector2){contentX - 300, 280}, 32, 1, errorRed);
+                    DrawTextEx(customFont, "Donation Not Found.", (Vector2){contentX, 220}, 36, 1, errorRed);
                 }
             }
         }
