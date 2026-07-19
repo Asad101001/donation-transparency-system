@@ -151,13 +151,10 @@ int my_atoi(const char* str) {
 double my_atof(const char* str) { return (double)my_atoi(str); }
 
 void initGUI() {
-    SetConfigFlags(FLAG_VSYNC_HINT);
+    SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_RESIZABLE);
     InitWindow(1280, 720, "Donation Transparency System");
-    SetExitKey(KEY_NULL); 
-    
-    int monitor = GetCurrentMonitor();
-    SetWindowSize(GetMonitorWidth(monitor), GetMonitorHeight(monitor));
-    ToggleFullscreen();
+    SetWindowMinSize(1024, 768);
+    // Explicitly allow closing using the cross button and ESC by not disabling SetExitKey
     
     customFont = LoadFontEx("C:\\Windows\\Fonts\\segoeui.ttf", 64, 0, 250);
     customFontBold = LoadFontEx("C:\\Windows\\Fonts\\segoeuib.ttf", 64, 0, 250);
@@ -166,6 +163,7 @@ void initGUI() {
 }
 
 bool wantsToExit = false;
+float scrollOffset = 0.0f;
 
 void DrawSidebar() {
     int sh = GetScreenHeight();
@@ -194,6 +192,7 @@ void DrawSidebar() {
                 activeTextBox = NULL; 
                 selectedDonorID = -1;
                 selectedProjectID = -1;
+                scrollOffset = 0.0f; // reset scroll on tab change
             }
         }
     }
@@ -223,6 +222,13 @@ void flattenProjects(Project* root) {
 void runGUI(SystemManager* sys) {
     while (!WindowShouldClose() && !wantsToExit) {
         UpdateTextBoxes(allTextBoxes, 9);
+        
+        // Handle scrolling
+        float wheel = GetMouseWheelMove();
+        if (wheel != 0.0f) {
+            scrollOffset -= wheel * 40.0f;
+            if (scrollOffset < 0) scrollOffset = 0;
+        }
 
         BeginDrawing();
         ClearBackground(bgDark);
@@ -275,31 +281,35 @@ void runGUI(SystemManager* sys) {
             DrawTextEx(customFontBold, "Receive Funds", (Vector2){contentX + 500, 50}, 36, 1, textWhite);
             DrawTextEx(customFont, "Click someone to receive money from them.", (Vector2){contentX + 500, 100}, 20, 1, textMuted);
             
-            int yOff = 140;
+            BeginScissorMode(contentX + 500, 140, sw - (contentX + 500), sh - 140);
+            float yOff = 140 - scrollOffset;
             for(int i = 0; i < sys->donorDB->size; i++) {
                 HashNode* cur = sys->donorDB->table[i];
                 while(cur != NULL) {
-                    Rectangle card = { contentX + 500, (float)yOff, 500, selectedDonorID == cur->donor.donorID ? 240.0f : 60.0f };
-                    bool hover = CheckCollisionPointRec(GetMousePosition(), {card.x, card.y, card.width, 60});
-                    DrawRectangleRec(card, (hover || selectedDonorID == cur->donor.donorID) ? panelLight : panelDark);
+                    Rectangle card = { contentX + 500, yOff, 500, selectedDonorID == cur->donor.donorID ? 240.0f : 60.0f };
                     
-                    DrawTextEx(customFontBold, cur->donor.name, (Vector2){card.x + 20, card.y + 18}, 24, 1, textWhite);
-                    DrawTextEx(customFont, "Click to receive funds", (Vector2){card.x + 300, card.y + 20}, 18, 1, textMuted);
-                    
-                    if (hover && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-                        selectedDonorID = (selectedDonorID == cur->donor.donorID) ? -1 : cur->donor.donorID;
-                    }
-                    
-                    if (selectedDonorID == cur->donor.donorID) {
-                        tDonAmt.bounds = { card.x + 20, card.y + 70, 460, 45 };
-                        tDonDate.bounds = { card.x + 20, card.y + 125, 460, 45 };
-                        DrawTextBox(tDonAmt); DrawTextBox(tDonDate);
-                        if (DrawButton((Rectangle){card.x + 20, card.y + 180, 200, 45}, "Confirm Funds", successGreen)) {
-                            if (tDonAmt.letterCount > 0) {
-                                makeDonation(sys, selectedDonorID, my_atof(tDonAmt.text), tDonDate.text);
-                                ShowPopup("Funds Received!", successGreen);
-                                ResetTextBox(tDonAmt); ResetTextBox(tDonDate);
-                                selectedDonorID = -1;
+                    if (yOff + card.height > 140 && yOff < sh) {
+                        bool hover = CheckCollisionPointRec(GetMousePosition(), {card.x, card.y, card.width, 60});
+                        DrawRectangleRec(card, (hover || selectedDonorID == cur->donor.donorID) ? panelLight : panelDark);
+                        
+                        DrawTextEx(customFontBold, cur->donor.name, (Vector2){card.x + 20, card.y + 18}, 24, 1, textWhite);
+                        DrawTextEx(customFont, "Click to receive funds", (Vector2){card.x + 300, card.y + 20}, 18, 1, textMuted);
+                        
+                        if (hover && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+                            selectedDonorID = (selectedDonorID == cur->donor.donorID) ? -1 : cur->donor.donorID;
+                        }
+                        
+                        if (selectedDonorID == cur->donor.donorID) {
+                            tDonAmt.bounds = { card.x + 20, card.y + 70, 460, 45 };
+                            tDonDate.bounds = { card.x + 20, card.y + 125, 460, 45 };
+                            DrawTextBox(tDonAmt); DrawTextBox(tDonDate);
+                            if (DrawButton((Rectangle){card.x + 20, card.y + 180, 200, 45}, "Confirm Funds", successGreen)) {
+                                if (tDonAmt.letterCount > 0) {
+                                    makeDonation(sys, selectedDonorID, my_atof(tDonAmt.text), tDonDate.text);
+                                    ShowPopup("Funds Received!", successGreen);
+                                    ResetTextBox(tDonAmt); ResetTextBox(tDonDate);
+                                    selectedDonorID = -1;
+                                }
                             }
                         }
                     }
@@ -308,6 +318,7 @@ void runGUI(SystemManager* sys) {
                     cur = cur->next;
                 }
             }
+            EndScissorMode();
             
         } else if (currentScreen == CAUSES) {
             DrawTextEx(customFontBold, "Start a New Cause", (Vector2){contentX, 50}, 36, 1, textWhite);
@@ -336,45 +347,51 @@ void runGUI(SystemManager* sys) {
             }
             
             projCount = 0; flattenProjects(sys->projects->root);
-            int yOff = 150;
+            
+            BeginScissorMode(contentX + 500, 150, sw - (contentX + 500), sh - 150);
+            float yOff = 150 - scrollOffset;
             for(int i = 0; i < projCount; i++) {
-                Rectangle card = { contentX + 500, (float)yOff, 500, selectedProjectID == projArray[i].projectID ? 260.0f : 80.0f };
-                bool hover = CheckCollisionPointRec(GetMousePosition(), {card.x, card.y, card.width, 80});
-                DrawRectangleRec(card, (hover || selectedProjectID == projArray[i].projectID) ? panelLight : panelDark);
+                Rectangle card = { contentX + 500, yOff, 500, selectedProjectID == projArray[i].projectID ? 260.0f : 80.0f };
                 
-                DrawTextEx(customFontBold, projArray[i].name, (Vector2){card.x + 20, card.y + 15}, 26, 1, textWhite);
-                
-                if (!isQueueEmpty(sys->allocationQueue)) {
-                    if (DrawButton((Rectangle){card.x + 320, card.y + 20, 160, 40}, "Assign Funds", accentCyan)) {
-                        allocateDonation(sys, projArray[i].projectID);
-                        ShowPopup("Funds Assigned!", successGreen);
-                    }
-                }
-                
-                DrawTextEx(customFont, "Click to log an expense", (Vector2){card.x + 20, card.y + 50}, 16, 1, textMuted);
-                
-                if (hover && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-                    selectedProjectID = (selectedProjectID == projArray[i].projectID) ? -1 : projArray[i].projectID;
-                }
-                
-                if (selectedProjectID == projArray[i].projectID) {
-                    tExpAmt.bounds = { card.x + 20, card.y + 90, 460, 40 };
-                    tExpDesc.bounds = { card.x + 20, card.y + 140, 460, 40 };
-                    tExpDate.bounds = { card.x + 20, card.y + 190, 460, 40 };
-                    DrawTextBox(tExpAmt); DrawTextBox(tExpDesc); DrawTextBox(tExpDate);
+                if (yOff + card.height > 150 && yOff < sh) {
+                    bool hover = CheckCollisionPointRec(GetMousePosition(), {card.x, card.y, card.width, 80});
+                    DrawRectangleRec(card, (hover || selectedProjectID == projArray[i].projectID) ? panelLight : panelDark);
                     
-                    if (DrawButton((Rectangle){card.x + 20, card.y + 240, 200, 40}, "Log Expense", errorRed)) {
-                        if (tExpAmt.letterCount > 0) {
-                            addExpense(sys, selectedProjectID, my_atof(tExpAmt.text), tExpDesc.text, tExpDate.text);
-                            ShowPopup("Expense Logged!", successGreen);
-                            ResetTextBox(tExpAmt); ResetTextBox(tExpDesc); ResetTextBox(tExpDate);
-                            selectedProjectID = -1;
+                    DrawTextEx(customFontBold, projArray[i].name, (Vector2){card.x + 20, card.y + 15}, 26, 1, textWhite);
+                    
+                    if (!isQueueEmpty(sys->allocationQueue)) {
+                        if (DrawButton((Rectangle){card.x + 320, card.y + 20, 160, 40}, "Assign Funds", accentCyan)) {
+                            allocateDonation(sys, projArray[i].projectID);
+                            ShowPopup("Funds Assigned!", successGreen);
+                        }
+                    }
+                    
+                    DrawTextEx(customFont, "Click to log an expense", (Vector2){card.x + 20, card.y + 50}, 16, 1, textMuted);
+                    
+                    if (hover && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+                        selectedProjectID = (selectedProjectID == projArray[i].projectID) ? -1 : projArray[i].projectID;
+                    }
+                    
+                    if (selectedProjectID == projArray[i].projectID) {
+                        tExpAmt.bounds = { card.x + 20, card.y + 90, 460, 40 };
+                        tExpDesc.bounds = { card.x + 20, card.y + 140, 460, 40 };
+                        tExpDate.bounds = { card.x + 20, card.y + 190, 460, 40 };
+                        DrawTextBox(tExpAmt); DrawTextBox(tExpDesc); DrawTextBox(tExpDate);
+                        
+                        if (DrawButton((Rectangle){card.x + 20, card.y + 240, 200, 40}, "Log Expense", errorRed)) {
+                            if (tExpAmt.letterCount > 0) {
+                                addExpense(sys, selectedProjectID, my_atof(tExpAmt.text), tExpDesc.text, tExpDate.text);
+                                ShowPopup("Expense Logged!", successGreen);
+                                ResetTextBox(tExpAmt); ResetTextBox(tExpDesc); ResetTextBox(tExpDate);
+                                selectedProjectID = -1;
+                            }
                         }
                     }
                 }
                 
                 yOff += card.height + 10;
             }
+            EndScissorMode();
             
         } else if (currentScreen == TRACK) {
             DrawTextEx(customFontBold, "Track Funds", (Vector2){contentX, 50}, 36, 1, textWhite);
@@ -410,28 +427,33 @@ void runGUI(SystemManager* sys) {
             DrawLine(contentX + 500, 50, contentX + 500, sh - 50, panelLight);
             DrawTextEx(customFontBold, "Contributions:", (Vector2){contentX + 550, 50}, 30, 1, textMuted);
             
-            int yOff = 100;
+            BeginScissorMode(contentX + 550, 100, sw - (contentX + 550), sh - 100);
+            float yOff = 100 - scrollOffset;
             Donation* cur = sys->donationRecords->head;
-            while(cur != NULL && yOff < sh - 100) {
-                Rectangle card = { contentX + 550, (float)yOff, 400, 60 };
-                bool hover = CheckCollisionPointRec(GetMousePosition(), card);
-                DrawRectangleRec(card, (hover || selectedReportDonationID == cur->donationID) ? panelLight : panelDark);
+            while(cur != NULL) {
+                Rectangle card = { contentX + 550, yOff, 400, 60 };
                 
-                char buf[200]; my_sprintf_int(buf, "Rs ", (int)cur->amount);
-                DrawTextEx(customFontBold, buf, (Vector2){card.x + 15, card.y + 15}, 28, 1, textWhite);
-                
-                const char* stat = "Waiting";
-                if(cur->currentStatus >= STATUS_ALLOCATED) stat = "Assigned";
-                if(cur->currentStatus == STATUS_COMPLETED) stat = "Utilized";
-                DrawTextEx(customFont, stat, (Vector2){card.x + 280, card.y + 20}, 20, 1, textMuted);
-                
-                if (hover && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-                    selectedReportDonationID = cur->donationID;
+                if (yOff + card.height > 100 && yOff < sh) {
+                    bool hover = CheckCollisionPointRec(GetMousePosition(), card);
+                    DrawRectangleRec(card, (hover || selectedReportDonationID == cur->donationID) ? panelLight : panelDark);
+                    
+                    char buf[200]; my_sprintf_int(buf, "Rs ", (int)cur->amount);
+                    DrawTextEx(customFontBold, buf, (Vector2){card.x + 15, card.y + 15}, 28, 1, textWhite);
+                    
+                    const char* stat = "Waiting";
+                    if(cur->currentStatus >= STATUS_ALLOCATED) stat = "Assigned";
+                    if(cur->currentStatus == STATUS_COMPLETED) stat = "Utilized";
+                    DrawTextEx(customFont, stat, (Vector2){card.x + 280, card.y + 20}, 20, 1, textMuted);
+                    
+                    if (hover && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+                        selectedReportDonationID = cur->donationID;
+                    }
                 }
                 
                 yOff += 70;
                 cur = cur->next;
             }
+            EndScissorMode();
         }
         
         if (popupTimer > 0) {
