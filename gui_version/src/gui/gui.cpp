@@ -239,26 +239,46 @@ void runGUI(SystemManager* sys) {
         float contentX = 330; 
         
         if (currentScreen == HOME) {
-            DrawTextEx(customFontBold, "Welcome", (Vector2){contentX, 60}, 60, 1, textWhite);
-            DrawTextEx(customFont, "Manage and track funds with complete transparency.", (Vector2){contentX, 130}, 28, 1, textMuted);
+            DrawTextEx(customFontBold, "Welcome to the DT System", (Vector2){contentX, 50}, 50, 1, textWhite);
+            DrawTextEx(customFont, "Manage and track funds with complete transparency.", (Vector2){contentX, 110}, 24, 1, textMuted);
             
-            Rectangle stat1 = { contentX, 220, 350, 150 };
-            DrawRectangleRec(stat1, panelDark);
-            DrawTextEx(customFont, "Largest Received", (Vector2){stat1.x + 20, stat1.y + 20}, 24, 1, textMuted);
-            char buf[100]; my_sprintf_int(buf, "Rs ", (int)getMax(sys->maxDonations));
-            DrawTextEx(customFontBold, buf, (Vector2){stat1.x + 20, stat1.y + 70}, 40, 1, accentCyan);
+            // Workflow Guide
+            Rectangle guide = { contentX, 160, 800, 260 };
+            DrawRectangleRec(guide, panelDark);
+            DrawRectangleLinesEx(guide, 2, accentCyan);
             
+            DrawTextEx(customFontBold, "How to use this system (The Workflow):", (Vector2){guide.x + 20, guide.y + 20}, 28, 1, accentCyan);
+            
+            const char* steps[] = {
+                "1. Receive Money: Go to 'Contributors', add people, and receive funds from them.",
+                "2. Create Causes: Go to 'Causes' and start welfare projects.",
+                "3. Assign Funds: Inside 'Causes', click 'Assign Funds' to move pending money to a project.",
+                "4. Spend Funds: Click on any Cause card to 'Log Expense' and utilize the money.",
+                "5. Track It All: Go to 'Track Funds' to see exactly where every penny went!"
+            };
+            
+            for(int i = 0; i < 5; i++) {
+                DrawTextEx(customFont, steps[i], (Vector2){guide.x + 20, guide.y + 70 + (i * 35)}, 20, 1, textWhite);
+            }
+            
+            // Stats
             int count = 0; double total = 0;
             Donation* temp = sys->donationRecords->head;
             while(temp != NULL) { count++; total += temp->amount; temp = temp->next; }
             
-            Rectangle stat3 = { contentX + 380, 220, 350, 150 };
-            DrawRectangleRec(stat3, panelDark);
-            DrawTextEx(customFont, "Total Contributions", (Vector2){stat3.x + 20, stat3.y + 20}, 24, 1, textMuted);
-            my_sprintf_int(buf, "", count);
-            DrawTextEx(customFontBold, buf, (Vector2){stat3.x + 20, stat3.y + 70}, 40, 1, textWhite);
+            Rectangle stat1 = { contentX, 450, 380, 120 };
+            DrawRectangleRec(stat1, panelDark);
+            DrawTextEx(customFont, "Largest Donation Received", (Vector2){stat1.x + 20, stat1.y + 20}, 20, 1, textMuted);
+            char buf[100]; my_sprintf_int(buf, "Rs ", (int)getMax(sys->maxDonations));
+            DrawTextEx(customFontBold, buf, (Vector2){stat1.x + 20, stat1.y + 60}, 36, 1, accentCyan);
             
-            if (DrawButton((Rectangle){contentX, 420, 400, 60}, "Load Example Data", panelLight)) {
+            Rectangle stat2 = { contentX + 420, 450, 380, 120 };
+            DrawRectangleRec(stat2, panelDark);
+            DrawTextEx(customFont, "Total Contributions", (Vector2){stat2.x + 20, stat2.y + 20}, 20, 1, textMuted);
+            my_sprintf_int(buf, "", count);
+            DrawTextEx(customFontBold, buf, (Vector2){stat2.x + 20, stat2.y + 60}, 36, 1, textWhite);
+            
+            if (DrawButton((Rectangle){contentX, 600, 800, 60}, "Click Here to Load Example Data (Highly Recommended!)", panelLight)) {
                 seedDummyData(sys);
             }
             
