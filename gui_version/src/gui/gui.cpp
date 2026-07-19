@@ -23,15 +23,15 @@ int my_sprintf_double(char* buf, const char* prefix, double val) {
 }
 
 // GUI Theme
-Color bgDark = { 15, 15, 20, 255 };
-Color panelDark = { 25, 25, 35, 255 };
-Color panelLight = { 40, 40, 55, 255 };
-Color accentCyan = { 0, 200, 255, 255 };
-Color accentCyanDark = { 0, 150, 200, 255 };
+Color bgDark = { 10, 10, 15, 255 };
+Color panelDark = { 20, 20, 28, 255 };
+Color panelLight = { 35, 35, 45, 255 };
+Color accentCyan = { 0, 180, 240, 255 };
+Color accentCyanDark = { 0, 120, 180, 255 };
 Color textWhite = { 245, 245, 250, 255 };
-Color textMuted = { 140, 140, 160, 255 };
-Color errorRed = { 255, 80, 80, 255 };
-Color successGreen = { 80, 220, 120, 255 };
+Color textMuted = { 130, 130, 150, 255 };
+Color errorRed = { 240, 70, 70, 255 };
+Color successGreen = { 60, 200, 110, 255 };
 
 Font customFont;
 Font customFontBold;
@@ -150,6 +150,9 @@ TextBox* allTextBoxes[] = { &tDonorName, &tDonorCnic, &tDonAmt, &tProjName, &tPr
 int selectedDonorID = -1;
 int selectedProjectID = -1;
 int selectedReportDonationID = -1;
+
+float donorAnimHeights[1000] = {0};
+float projAnimHeights[1000] = {0};
 
 void ResetTextBox(TextBox& tb) { tb.text[0] = '\0'; tb.letterCount = 0; }
 int my_atoi(const char* str) {
@@ -330,10 +333,15 @@ void runGUI(SystemManager* sys) {
             
             BeginScissorMode(contentX + 500, 140, sw - (contentX + 500), sh - 140);
             float yOff = 140 - scrollOffset;
+            int donorIdx = 0;
             for(int i = 0; i < sys->donorDB->size; i++) {
                 HashNode* cur = sys->donorDB->table[i];
                 while(cur != NULL) {
-                    Rectangle card = { contentX + 500, yOff, 500, selectedDonorID == cur->donor.donorID ? 200.0f : 60.0f };
+                    float targetH = selectedDonorID == cur->donor.donorID ? 200.0f : 60.0f;
+                    if (donorAnimHeights[donorIdx] < 60.0f) donorAnimHeights[donorIdx] = 60.0f;
+                    donorAnimHeights[donorIdx] += (targetH - donorAnimHeights[donorIdx]) * 0.15f;
+                    
+                    Rectangle card = { contentX + 500, yOff, 500, donorAnimHeights[donorIdx] };
                     
                     if (yOff + card.height > 140 && yOff < sh) {
                         bool hover = CheckCollisionPointRec(GetMousePosition(), {card.x, card.y, card.width, 60});
@@ -347,7 +355,7 @@ void runGUI(SystemManager* sys) {
                             activeTextBox = NULL;
                         }
                         
-                        if (selectedDonorID == cur->donor.donorID) {
+                        if (selectedDonorID == cur->donor.donorID && donorAnimHeights[donorIdx] > 180.0f) {
                             tDonAmt.bounds = { card.x + 20, card.y + 70, 460, 45 };
                             DrawTextBox(tDonAmt);
                             
@@ -370,6 +378,7 @@ void runGUI(SystemManager* sys) {
                     
                     yOff += card.height + 10;
                     cur = cur->next;
+                    donorIdx++;
                 }
             }
             EndScissorMode();
@@ -405,7 +414,11 @@ void runGUI(SystemManager* sys) {
             BeginScissorMode(contentX + 500, 150, sw - (contentX + 500), sh - 150);
             float yOff = 150 - scrollOffset;
             for(int i = 0; i < projCount; i++) {
-                Rectangle card = { contentX + 500, yOff, 500, selectedProjectID == projArray[i].projectID ? 220.0f : 80.0f };
+                float targetH = selectedProjectID == projArray[i].projectID ? 220.0f : 80.0f;
+                if (projAnimHeights[i] < 80.0f) projAnimHeights[i] = 80.0f;
+                projAnimHeights[i] += (targetH - projAnimHeights[i]) * 0.15f;
+                
+                Rectangle card = { contentX + 500, yOff, 500, projAnimHeights[i] };
                 
                 if (yOff + card.height > 150 && yOff < sh) {
                     bool hover = CheckCollisionPointRec(GetMousePosition(), {card.x, card.y, card.width, 80});
@@ -427,7 +440,7 @@ void runGUI(SystemManager* sys) {
                         activeTextBox = NULL;
                     }
                     
-                    if (selectedProjectID == projArray[i].projectID) {
+                    if (selectedProjectID == projArray[i].projectID && projAnimHeights[i] > 200.0f) {
                         tExpAmt.bounds = { card.x + 20, card.y + 90, 460, 40 };
                         tExpDesc.bounds = { card.x + 20, card.y + 140, 460, 40 };
                         DrawTextBox(tExpAmt); DrawTextBox(tExpDesc);
