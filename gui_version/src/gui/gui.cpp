@@ -475,6 +475,24 @@ void runGUI(SystemManager* sys) {
                     
                     DrawRectangle(panel.x + 30, panel.y + 220, 390, 50, panelLight);
                     DrawTextEx(customFontBold, stat, (Vector2){panel.x + 45, panel.y + 232}, 24, 1, statCol);
+                    
+                    // Render DSA Stack History
+                    DrawTextEx(customFontBold, "Status History (DSA Stack):", (Vector2){panel.x + 30, panel.y + 300}, 20, 1, textMuted);
+                    int histY = panel.y + 330;
+                    StatusNode* hCur = d->historyTop;
+                    while (hCur != NULL) {
+                        const char* hStat = "Received";
+                        if(hCur->status == STATUS_ALLOCATED) hStat = "Assigned";
+                        if(hCur->status == STATUS_IN_PROGRESS) hStat = "In Progress";
+                        if(hCur->status == STATUS_COMPLETED) hStat = "Completed";
+                        
+                        DrawTextEx(customFont, hStat, (Vector2){panel.x + 30, (float)histY}, 18, 1, textWhite);
+                        if (hCur->next != NULL) {
+                            DrawLine(panel.x + 130, histY + 10, panel.x + 150, histY + 10, textMuted);
+                        }
+                        histY += 25;
+                        hCur = hCur->next;
+                    }
                 }
             } else {
                 DrawTextEx(customFont, "Click a contribution on the right to track it.", (Vector2){contentX, 120}, 22, 1, textMuted);
