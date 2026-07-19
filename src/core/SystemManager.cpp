@@ -45,6 +45,7 @@ void makeDonation(SystemManager* sys, int donorID, double amount, const char* da
     d.amount = amount;
     d.remainingAmount = amount;
     my_strcpy(d.date, date);
+    d.allocatedProjectID = -1;
     d.historyTop = NULL;
     d.next = NULL;
     d.prev = NULL;
@@ -100,6 +101,7 @@ void allocateDonation(SystemManager* sys, int projectID) {
     
     Donation* d = searchDonation(sys->donationRecords, alloc.donationID);
     if (d != NULL) {
+        d->allocatedProjectID = projectID;
         pushStatus(d, STATUS_ALLOCATED);
         cout << "[SUCCESS] Allocated Donation " << d->donationID << " to Project " << projectID << "\n";
     }
@@ -126,8 +128,7 @@ void addExpense(SystemManager* sys, int projectID, double amount, const char* de
     // Real logic would be more complex, but we demonstrate finding and updating:
     Donation* cur = sys->donationRecords->head;
     while(cur != NULL) {
-        if (cur->currentStatus == STATUS_ALLOCATED || cur->currentStatus == STATUS_IN_PROGRESS) {
-            // we assume it is related if it has remaining amount > 0
+        if (cur->allocatedProjectID == projectID && (cur->currentStatus == STATUS_ALLOCATED || cur->currentStatus == STATUS_IN_PROGRESS)) {
             if (cur->remainingAmount >= amount) {
                 cur->remainingAmount -= amount;
                 pushStatus(cur, STATUS_IN_PROGRESS);

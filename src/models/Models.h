@@ -47,6 +47,8 @@ struct Donation {
     char date[MAX_STR];
     DonationStatus currentStatus;
     
+    int allocatedProjectID; // Link to project
+    
     StatusNode* historyTop; // Stack for status history
     
     Donation* prev;
