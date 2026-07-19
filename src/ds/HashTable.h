@@ -1,6 +1,4 @@
-#ifndef HASHTABLE_H
-#define HASHTABLE_H
-
+#pragma once
 #include "../models/Models.h"
 
 struct HashNode {
@@ -18,5 +16,3 @@ int hashFunction(HashTable* ht, int donorID);
 void insertDonor(HashTable* ht, Donor d);
 Donor* searchDonor(HashTable* ht, int donorID);
 void printAllDonors(HashTable* ht);
-
-#endif // HASHTABLE_H

@@ -1,6 +1,4 @@
-#ifndef UTILS_H
-#define UTILS_H
-
+#pragma once
 void my_strcpy(char* dest, const char* src) {
     int i = 0;
     while(src[i] != '\0') {
@@ -20,5 +18,3 @@ int my_strcmp(const char* str1, const char* str2) {
     }
     return str1[i] - str2[i];
 }
-
-#endif

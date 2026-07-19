@@ -1,8 +1,5 @@
 #include "Queue.h"
 
-#ifndef NULL
-#define NULL 0
-#endif
 
 Queue* createQueue() {
     Queue* q = new Queue;

@@ -1,6 +1,4 @@
-#ifndef GRAPH_H
-#define GRAPH_H
-
+#pragma once
 struct AdjListNode {
     int destProjectID;
     AdjListNode* next;
@@ -18,5 +16,3 @@ struct Graph {
 Graph* createGraph(int V);
 void addEdge(Graph* graph, int src, int dest);
 void printGraph(Graph* graph);
-
-#endif // GRAPH_H

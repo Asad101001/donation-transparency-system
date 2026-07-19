@@ -1,6 +1,8 @@
-#ifndef MODELS_H
-#define MODELS_H
+#pragma once
 
+#ifndef NULL
+#define NULL 0
+#endif
 #define MAX_STR 100
 
 // Using C-style enums or string for status. Let's use enum for internal status tracking, but string is also fine.
@@ -67,5 +69,3 @@ struct AllocationNode {
     Allocation data;
     AllocationNode* next;
 };
-
-#endif // MODELS_H

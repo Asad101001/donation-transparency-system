@@ -1,6 +1,4 @@
-#ifndef SYSTEMMANAGER_H
-#define SYSTEMMANAGER_H
-
+#pragma once
 #include "../ds/HashTable.h"
 #include "../ds/DoublyLinkedList.h"
 #include "../ds/AVLTree.h"
@@ -39,5 +37,3 @@ void searchDonation(SystemManager* sys, int donationID);
 void generateTransparencyReport(SystemManager* sys, int donationID);
 void viewDonationHistory(SystemManager* sys);
 void viewStatistics(SystemManager* sys);
-
-#endif // SYSTEMMANAGER_H

@@ -1,6 +1,4 @@
-#ifndef QUEUE_H
-#define QUEUE_H
-
+#pragma once
 #include "../models/Models.h"
 
 struct Queue {
@@ -12,5 +10,3 @@ Queue* createQueue();
 void enqueue(Queue* q, Allocation a);
 Allocation dequeue(Queue* q);
 bool isQueueEmpty(Queue* q);
-
-#endif // QUEUE_H

@@ -3,9 +3,6 @@
 
 using namespace std;
 
-#ifndef NULL
-#define NULL 0
-#endif
 
 void pushStatus(Donation* d, DonationStatus newStatus) {
     StatusNode* newNode = new StatusNode;

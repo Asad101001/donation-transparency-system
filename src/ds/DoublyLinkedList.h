@@ -1,6 +1,4 @@
-#ifndef DOUBLYLINKEDLIST_H
-#define DOUBLYLINKEDLIST_H
-
+#pragma once
 #include "../models/Models.h"
 
 struct DoublyLinkedList {
@@ -12,5 +10,3 @@ DoublyLinkedList* createDoublyLinkedList();
 void insertDonation(DoublyLinkedList* dll, Donation d);
 Donation* searchDonation(DoublyLinkedList* dll, int donationID);
 void printAllDonations(DoublyLinkedList* dll);
-
-#endif // DOUBLYLINKEDLIST_H

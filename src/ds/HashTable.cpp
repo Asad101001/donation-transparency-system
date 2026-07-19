@@ -3,9 +3,6 @@
 
 using namespace std;
 
-#ifndef NULL
-#define NULL 0
-#endif
 
 HashTable* createHashTable(int size) {
     HashTable* ht = new HashTable;

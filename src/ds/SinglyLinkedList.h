@@ -1,6 +1,4 @@
-#ifndef SINGLYLINKEDLIST_H
-#define SINGLYLINKEDLIST_H
-
+#pragma once
 #include "../models/Models.h"
 
 struct SinglyLinkedList {
@@ -10,5 +8,3 @@ struct SinglyLinkedList {
 SinglyLinkedList* createSinglyLinkedList();
 void insertExpense(SinglyLinkedList* sll, Expense e);
 void printExpensesForProject(SinglyLinkedList* sll, int projectID);
-
-#endif // SINGLYLINKEDLIST_H

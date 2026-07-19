@@ -4,9 +4,6 @@
 using namespace std;
 #include <cstring>
 
-#ifndef NULL
-#define NULL 0
-#endif
 
 DoublyLinkedList* createDoublyLinkedList() {
     DoublyLinkedList* dll = new DoublyLinkedList;

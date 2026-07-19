@@ -3,9 +3,6 @@
 
 using namespace std;
 
-#ifndef NULL
-#define NULL 0
-#endif
 
 SinglyLinkedList* createSinglyLinkedList() {
     SinglyLinkedList* sll = new SinglyLinkedList;

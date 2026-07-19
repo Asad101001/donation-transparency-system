@@ -1,8 +1,5 @@
 #include "Heap.h"
 
-#ifndef NULL
-#define NULL 0
-#endif
 
 void swap(double& a, double& b) {
     double temp = a;

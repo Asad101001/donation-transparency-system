@@ -3,9 +3,6 @@
 
 using namespace std;
 
-#ifndef NULL
-#define NULL 0
-#endif
 
 Graph* createGraph(int V) {
     Graph* graph = new Graph;

@@ -4,9 +4,6 @@
 
 using namespace std;
 
-#ifndef NULL
-#define NULL 0
-#endif
 
 SystemManager* createSystemManager() {
     SystemManager* sys = new SystemManager;

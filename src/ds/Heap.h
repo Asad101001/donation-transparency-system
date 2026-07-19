@@ -1,6 +1,4 @@
-#ifndef HEAP_H
-#define HEAP_H
-
+#pragma once
 struct MaxHeap {
     double* array;
     int capacity;
@@ -20,5 +18,3 @@ double getMax(MaxHeap* h);
 MinHeap* createMinHeap(int capacity);
 void insertMinHeap(MinHeap* h, double val);
 double getMin(MinHeap* h);
-
-#endif // HEAP_H
