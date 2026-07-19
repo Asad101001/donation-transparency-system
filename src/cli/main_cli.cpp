@@ -1,4 +1,4 @@
-#include "core/SystemManager.h"
+#include "../core/SystemManager.h"
 #include <iostream>
 
 using namespace std;

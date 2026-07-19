@@ -1,5 +1,5 @@
-#include "core/SystemManager.h"
-#include "gui/gui.h"
+#include "../core/SystemManager.h"
+#include "gui.h"
 
 int main() {
     SystemManager* sys = createSystemManager();
