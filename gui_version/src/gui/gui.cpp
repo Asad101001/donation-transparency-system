@@ -85,7 +85,7 @@ void UpdateTextBoxes(TextBox** textboxes, int count) {
         while (key > 0) {
             bool valid = false;
             if (activeTextBox->isNumeric) {
-                if (key >= '0' && key <= '9') valid = true;
+                if ((key >= '0' && key <= '9') || key == '.' || key == '-') valid = true;
             } else {
                 if (key >= 32 && key <= 125) valid = true;
             }
@@ -344,6 +344,7 @@ void runGUI(SystemManager* sys) {
                         
                         if (hover && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
                             selectedDonorID = (selectedDonorID == cur->donor.donorID) ? -1 : cur->donor.donorID;
+                            activeTextBox = NULL;
                         }
                         
                         if (selectedDonorID == cur->donor.donorID) {
@@ -364,9 +365,6 @@ void runGUI(SystemManager* sys) {
                                     ShowPopup("Please enter an amount.", errorRed);
                                 }
                             }
-                        } else {
-                            // Ensure invisible cards don't have bounding boxes active for this specific field
-                            if (&tDonAmt == activeTextBox) activeTextBox = NULL;
                         }
                     }
                     
@@ -426,6 +424,7 @@ void runGUI(SystemManager* sys) {
                     
                     if (hover && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
                         selectedProjectID = (selectedProjectID == projArray[i].projectID) ? -1 : projArray[i].projectID;
+                        activeTextBox = NULL;
                     }
                     
                     if (selectedProjectID == projArray[i].projectID) {
