@@ -58,7 +58,7 @@ void DrawTextBox(TextBox& tb) {
     
     // Draw modern rounded textbox panel
     DrawRectangleRounded(tb.bounds, 0.2f, 4, isActive ? panelLight : panelDark);
-    DrawRectangleRoundedLines(tb.bounds, 0.2f, 4, isActive ? accentCyan : textMuted);
+    DrawRectangleRoundedLines(tb.bounds, 0.2f, 4, 1.0f, isActive ? accentCyan : textMuted);
     
     if (tb.letterCount == 0 && !isActive) {
         DrawTextEx(customFont, tb.placeholder, (Vector2){tb.bounds.x + 15, tb.bounds.y + tb.bounds.height/2 - 12}, 22, 1, textMuted);
@@ -166,7 +166,7 @@ bool DrawButton(Rectangle bounds, const char* text, Color color = accentCyan) {
     }
     
     DrawRectangleRounded(bounds, 0.25f, 4, currentBtnColor);
-    DrawRectangleRoundedLines(bounds, 0.25f, 4, hovered ? textWhite : panelLight);
+    DrawRectangleRoundedLines(bounds, 0.25f, 4, 1.0f, hovered ? textWhite : panelLight);
     
     // Auto-calculate text color based on button color brightness
     Color textColor = (color.r == panelLight.r && color.g == panelLight.g && color.b == panelLight.b) ? textWhite : bgDark;
@@ -388,7 +388,7 @@ void runGUI(SystemManager* sys) {
             // Workflow visualizer
             Rectangle guide = { contentX, 160, 800, 290 };
             DrawRectangleRounded(guide, 0.05f, 4, panelDark);
-            DrawRectangleRoundedLines(guide, 0.05f, 4, panelLight);
+            DrawRectangleRoundedLines(guide, 0.05f, 4, 1.0f, panelLight);
             
             DrawTextEx(customFontBold, "DT System Status & Workflow:", (Vector2){guide.x + 20, guide.y + 20}, 28, 1, accentCyan);
             
@@ -409,7 +409,7 @@ void runGUI(SystemManager* sys) {
             // Largest Donation Received Card
             Rectangle stat1 = { contentX, 475, 380, 120 };
             DrawRectangleRounded(stat1, 0.1f, 4, panelDark);
-            DrawRectangleRoundedLines(stat1, 0.1f, 4, panelLight);
+            DrawRectangleRoundedLines(stat1, 0.1f, 4, 1.0f, panelLight);
             DrawRectangle((int)stat1.x, (int)stat1.y, 6, (int)stat1.height, accentCyan); // accent left bar
             DrawTextEx(customFont, "Largest Donation Received", (Vector2){stat1.x + 20, stat1.y + 20}, 20, 1, textMuted);
             char buf[100]; my_sprintf_int(buf, "Rs ", (int)getMax(sys->maxDonations));
@@ -418,7 +418,7 @@ void runGUI(SystemManager* sys) {
             // Total Contributions count Card
             Rectangle stat2 = { contentX + 420, 475, 380, 120 };
             DrawRectangleRounded(stat2, 0.1f, 4, panelDark);
-            DrawRectangleRoundedLines(stat2, 0.1f, 4, panelLight);
+            DrawRectangleRoundedLines(stat2, 0.1f, 4, 1.0f, panelLight);
             DrawRectangle((int)stat2.x, (int)stat2.y, 6, (int)stat2.height, successGreen); // accent left bar
             DrawTextEx(customFont, "Total Donations Logged", (Vector2){stat2.x + 20, stat2.y + 20}, 20, 1, textMuted);
             my_sprintf_int(buf, "", donationCount);
@@ -463,7 +463,7 @@ void runGUI(SystemManager* sys) {
                         bool hover = CheckCollisionPointRec(GetMousePosition(), {card.x, card.y, card.width, 60});
                         
                         DrawRectangleRounded(card, 0.05f, 4, (hover || selectedDonorID == cur->donor.donorID) ? panelLight : panelDark);
-                        DrawRectangleRoundedLines(card, 0.05f, 4, (selectedDonorID == cur->donor.donorID) ? accentCyan : panelLight);
+                        DrawRectangleRoundedLines(card, 0.05f, 4, 1.0f, (selectedDonorID == cur->donor.donorID) ? accentCyan : panelLight);
                         
                         DrawTextEx(customFontBold, cur->donor.name, (Vector2){card.x + 20, card.y + 18}, 24, 1, textWhite);
                         
@@ -565,7 +565,7 @@ void runGUI(SystemManager* sys) {
                     bool hover = CheckCollisionPointRec(GetMousePosition(), {card.x, card.y, card.width, 80});
                     
                     DrawRectangleRounded(card, 0.05f, 4, (hover || selectedProjectID == projArray[i].projectID) ? panelLight : panelDark);
-                    DrawRectangleRoundedLines(card, 0.05f, 4, (selectedProjectID == projArray[i].projectID) ? accentCyan : panelLight);
+                    DrawRectangleRoundedLines(card, 0.05f, 4, 1.0f, (selectedProjectID == projArray[i].projectID) ? accentCyan : panelLight);
                     
                     DrawTextEx(customFontBold, projArray[i].name, (Vector2){card.x + 20, card.y + 15}, 26, 1, textWhite);
                     DrawTextEx(customFont, projArray[i].description, (Vector2){card.x + 20, card.y + 45}, 16, 1, textMuted);
@@ -633,7 +633,7 @@ void runGUI(SystemManager* sys) {
                 if (d != NULL) {
                     Rectangle panel = { contentX, 120, 480, 500 };
                     DrawRectangleRounded(panel, 0.05f, 4, panelDark);
-                    DrawRectangleRoundedLines(panel, 0.05f, 4, panelLight);
+                    DrawRectangleRoundedLines(panel, 0.05f, 4, 1.0f, panelLight);
                     
                     char buf[100];
                     my_sprintf_int(buf, "Funds Received: Rs ", (int)d->amount);
@@ -703,7 +703,7 @@ void runGUI(SystemManager* sys) {
                     bool hover = CheckCollisionPointRec(GetMousePosition(), card);
                     
                     DrawRectangleRounded(card, 0.15f, 4, (hover || selectedReportDonationID == cur->donationID) ? panelLight : panelDark);
-                    DrawRectangleRoundedLines(card, 0.15f, 4, (selectedReportDonationID == cur->donationID) ? accentCyan : panelLight);
+                    DrawRectangleRoundedLines(card, 0.15f, 4, 1.0f, (selectedReportDonationID == cur->donationID) ? accentCyan : panelLight);
                     
                     char buf[200]; my_sprintf_int(buf, "Rs ", (int)cur->amount);
                     DrawTextEx(customFontBold, buf, (Vector2){card.x + 20, card.y + 18}, 26, 1, textWhite);
